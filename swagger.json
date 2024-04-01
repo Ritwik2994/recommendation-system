@@ -1,0 +1,144 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Node Typescript Boilerplate for Microservices. Skeleton for Node.js Apps written in TypeScript (with Setup Instructions for ESLint, Prettier, and Husky)",
+    "version": "1.0.0",
+    "title": "Node Boilerplate"
+  },
+  "host": "",
+  "basePath": "",
+  "tags": [
+    {
+      "name": "node-boilerplate",
+      "description": "Node Typescript Boilerplate"
+    }
+  ],
+  "schemes": ["http", "https"],
+  "paths": {
+    "/system/info": {
+      "get": {
+        "tags": ["node-boilerplate"],
+        "summary": "get system status",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/ApiResponse"
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/system/time": {
+      "get": {
+        "tags": ["node-boilerplate"],
+        "summary": "get server time",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/ApiResponse"
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/system/usage": {
+      "get": {
+        "tags": ["node-boilerplate"],
+        "summary": "get server usage",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/ApiResponse"
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/user": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Create a new user",
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "400": {
+            "description": "Bad request, invalid input"
+          }
+        },
+        "security": []
+      },
+      "get": {
+        "tags": ["User"],
+        "summary": "Get all users",
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/User"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": []
+      }
+    },
+    "/user/{id}": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Get user by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User details",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "securityDefinitions": {},
+  "definitions": {
+    "ApiResponse": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  "externalDocs": {
+    "description": "Find out more about Node Typescript Boilerplate",
+    "url": "https://blog.santoshshinde.com/skeleton-for-node-js-apps-written-in-typescript-444fa1695b30"
+  }
+}
