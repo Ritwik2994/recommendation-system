@@ -2,7 +2,6 @@ import { NextFunction, Request, Response, Router } from "express";
 
 import { redis } from "../../config/redis";
 import BaseController from "../BaseController";
-import { IPost } from "../post/post.interface";
 import { PostModel } from "../post/post.schema";
 import { UserModel } from "../user/user.schema";
 
@@ -57,12 +56,12 @@ export default class RecommendationController extends BaseController {
     }
   }
 
-  private calculatePopularityScore(post: IPost): number {
+  private calculatePopularityScore(post): number {
     const { likes, comments } = post;
     return likes.length + comments.length * 2; // Weigh comments more than likes
   }
 
-  private async getRecommendedPosts(userId: string): Promise<IPost[]> {
+  private async getRecommendedPosts(userId: string): Promise<any> {
     // Check Redis cache
     const cachedPosts = await redis.client.get(
       `${this.RECOMMENDATION_CACHE_KEY}:${userId}`,
@@ -83,21 +82,25 @@ export default class RecommendationController extends BaseController {
     }).lean();
 
     // Fetch posts from followed users
-    const followedUserIds = Array.from(user.followedUsers.values());
+    const followedUserIds = user.followedUsers.map((id) => id.toString());
     const followedUserPosts = await PostModel.find({
       author: { $in: followedUserIds },
     }).lean();
 
     // Fetch posts liked and commented by followed users
-    const followedUsersInteractions = Array.from(
-      user.followedUsers.values(),
-    ).flatMap((followedUserId) =>
-      Array.from(
-        (user.interactions.get(followedUserId.toString()) || []).values(),
-      ),
-    );
+    const followedUsersInteractions = [];
+
+    for (const followedUserId of user.followedUsers) {
+      const userInteractions = user.interactions.filter(
+        (interaction) =>
+          interaction.userId &&
+          interaction.userId.toString() === followedUserId.toString(),
+      );
+      followedUsersInteractions.push(...userInteractions);
+    }
+
     const interactedPostIds = followedUsersInteractions.map(
-      (interaction) => interaction.postId,
+      (interaction) => interaction["postId"],
     );
     const interactedPosts = await PostModel.find({
       _id: { $in: interactedPostIds },
@@ -105,10 +108,14 @@ export default class RecommendationController extends BaseController {
 
     // Combine and sort posts
     const recommendedPosts = [
-      ...followedUserPosts,
-      ...interactedPosts,
-      ...interestPosts,
+      ...followedUserPosts.map((post) => ({
+        ...post,
+        _id: post._id.toString(),
+      })),
+      ...interactedPosts.map((post) => ({ ...post, _id: post._id.toString() })),
+      ...interestPosts.map((post) => ({ ...post, _id: post._id.toString() })),
     ];
+
     recommendedPosts.sort((a, b) => {
       const aScore = this.calculatePopularityScore(a);
       const bScore = this.calculatePopularityScore(b);
@@ -116,21 +123,27 @@ export default class RecommendationController extends BaseController {
     });
 
     // Remove posts the user has already seen or interacted with
-    const seenPostIds = Array.from(user.interactions.values()).map(
+    const seenPostIds = Object.values(user.interactions).map(
       (interaction) => interaction.postId,
     );
     const filteredPosts = recommendedPosts.filter(
       (post) => !seenPostIds.includes(post._id),
     );
 
-    // Cache recommended posts in Redis
     await redis.client.set(
       `${this.RECOMMENDATION_CACHE_KEY}:${userId}`,
       JSON.stringify(filteredPosts),
-      "EX",
-      this.CACHE_EXPIRATION,
     );
 
+    await redis.client.EXPIRE(
+      `${this.RECOMMENDATION_CACHE_KEY}:${userId}`,
+      this.CACHE_EXPIRATION,
+    );
     return recommendedPosts;
   }
 }
+
+//sifarek368
+// pass  SiyJsC9u1AteFk60
+
+// mongodb+srv://sifarek368:SiyJsC9u1AteFk60@cluster0.quprtpk.mongodb.net/

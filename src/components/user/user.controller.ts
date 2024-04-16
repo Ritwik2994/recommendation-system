@@ -130,7 +130,32 @@ export default class UserController extends BaseController {
         });
         users.push(user);
       }
-      await UserModel.insertMany(users);
+
+      const usersData = await UserModel.insertMany(users);
+
+      usersData.forEach(async (obj) => {
+        const currentId = obj._id;
+
+        // Get all _id values excluding the current object's _id
+        const idsExcludingCurrent = usersData
+          .map((item) => item._id)
+          .filter((id) => id !== currentId);
+
+        // Define the number of IDs to randomly pick (adjust as needed)
+        const numberOfIdsToPick = 3;
+
+        // Randomly pick 'numberOfIdsToPick' IDs from 'idsExcludingCurrent'
+        const randomlyPickedIds = await this.getRandomItemsFromArrayExcluding(
+          idsExcludingCurrent,
+          numberOfIdsToPick,
+          currentId,
+        );
+
+        await UserModel.updateOne(
+          { _id: currentId },
+          { followedUsers: randomlyPickedIds },
+        );
+      });
 
       const posts = [];
       const numPosts = req.body.numPost;
@@ -149,12 +174,72 @@ export default class UserController extends BaseController {
         });
         posts.push(post);
       }
-      await PostModel.insertMany(posts);
+      const postsData = await PostModel.insertMany(posts);
+      const interactionsData = [];
+      postsData.forEach(async (post) => {
+        const { author } = post;
 
+        // Check if post author exists and matches the author of the post's interactions
+        if (author) {
+          let randomUserId;
+          // Simulate likes
+          const numLikes = faker.datatype.number({ min: 0, max: 10 }); // Generate random number of likes
+          for (let i = 0; i < numLikes; i++) {
+            const randomUserIndex = faker.datatype.number({
+              min: 0,
+              max: usersData.length - 1,
+            });
+            randomUserId = usersData[randomUserIndex]._id;
+            post.likes.push(randomUserId); // Add the user to the post's likes
+            interactionsData.push({
+              type: "like",
+              postId: post._id.toString(),
+              userId: randomUserId.toString(),
+            });
+          }
+
+          // Simulate comments
+          const numComments = faker.datatype.number({ min: 0, max: 5 }); // Generate random number of comments
+          for (let i = 0; i < numComments; i++) {
+            const randomUserIndex = faker.datatype.number({
+              min: 0,
+              max: usersData.length - 1,
+            });
+            const randomUserId = usersData[randomUserIndex]._id;
+            const randomText = faker.lorem.sentence(); // Generate random comment text
+            post.comments.push({
+              user: randomUserId,
+              text: randomText,
+              createdAt: faker.date.recent(),
+            });
+            interactionsData.push({
+              type: "comment",
+              postId: post._id.toString(),
+              userId: randomUserId.toString(),
+            });
+          }
+
+          await UserModel.updateOne(
+            { _id: randomUserId },
+            { interactions: interactionsData },
+          );
+
+          await PostModel.updateOne({ _id: post._id }, { likes: randomUserId });
+        }
+      });
       res.status(201).json({ message: "Dummy data inserted successfully." });
       console.log(`Inserted ${users.length} fake users.`);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
+  }
+
+  private async getRandomItemsFromArrayExcluding(array, count, excludedItem) {
+    // Filter out the excluded item from the array
+    const filteredArray = array.filter((item) => item !== excludedItem);
+
+    // Shuffle the filtered array and select 'count' items
+    const shuffled = filteredArray.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
   }
 }

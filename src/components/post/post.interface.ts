@@ -1,14 +1,14 @@
 import mongoose from "mongoose";
 
 export interface IPost {
-  _id: string;
+  _id: string | any;
   content: string;
   author: mongoose.Schema.Types.ObjectId | string;
   sport?: string;
   event?: string;
-  likes: mongoose.Schema.Types.ObjectId[];
+  likes: any;
   comments: {
-    user: mongoose.Schema.Types.ObjectId;
+    user: any; //mongoose.Schema.Types.ObjectId;
     text: string;
     createdAt: Date;
   }[];
