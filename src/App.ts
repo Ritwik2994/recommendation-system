@@ -61,6 +61,7 @@ export default class App {
         "http://localhost:4000/",
         "http://example.com/",
         "http://127.0.0.1:8080",
+        "http://0.0.0.0:3000",
       ],
     };
     this.express.use(cors(corsOptions));

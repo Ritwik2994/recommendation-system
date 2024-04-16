@@ -1,5 +1,4 @@
 import * as http from "http";
-import { AddressInfo } from "net";
 
 import App from "./App";
 import { db, redis } from "./config";
@@ -17,10 +16,8 @@ function serverError(error: NodeJS.ErrnoException): void {
 }
 
 function serverListening(): void {
-  const addressInfo: AddressInfo = <AddressInfo>server.address();
-  console.log(
-    `Listening on ${addressInfo.address}:${process.env.NODE_PORT || 8080}`,
-  );
+  const addressInfo = "0.0.0.0"; //<AddressInfo>server.address();
+  console.log(`Listening on ${addressInfo}:${process.env.NODE_PORT || 8080}`);
 }
 
 db.run();
