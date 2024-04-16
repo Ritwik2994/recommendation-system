@@ -17,7 +17,7 @@ function serverError(error: NodeJS.ErrnoException): void {
 
 function serverListening(): void {
   const addressInfo = "0.0.0.0"; //<AddressInfo>server.address();
-  console.log(`Listening on ${addressInfo}:${process.env.NODE_PORT || 8080}`);
+  console.log(`Listening on ${addressInfo}:${process.env.PORT || 3000}`);
 }
 
 db.run();
@@ -26,12 +26,12 @@ redis.run();
 app
   .init()
   .then(() => {
-    app.express.set("port", process.env.NODE_PORT || 8080);
+    app.express.set("port", process.env.PORT || 3000);
 
     server = app.httpServer;
     server.on("error", serverError);
     server.on("listening", serverListening);
-    server.listen(process.env.NODE_PORT || 8080);
+    server.listen(process.env.PORT || 3000);
   })
   .catch((err: Error) => {
     console.info("app.init error");
